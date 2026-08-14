@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TalentFlow AI — Panel RRHH</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="marca">TalentFlow <span>AI</span></div>
+    <a href="index.html">← Formulario de postulación</a>
+  </header>
+  <main class="container container-wide">
+    <h1>Panel de Recursos Humanos</h1>
+    <p class="subtitle">TalentFlow AI — Gestión de vacantes y métricas del proceso</p>
+
+    <!-- ================= CREAR VACANTE ================= -->
+    <section class="panel">
+      <h2>Crear nueva vacante</h2>
+      <p class="panel-desc">
+        Las vacantes creadas aquí aparecen automáticamente en el formulario público
+        de postulación y sus requisitos se usan en la evaluación de la IA.
+      </p>
+
+      <!-- El action apunta al Webhook de producción de n8n para vacantes.
+           El envío lo hace script.js con fetch y la respuesta HTML se
+           muestra en el div vacanteBox. -->
+      <form id="vacanteForm" method="POST"
+            action="https://reseto.app.n8n.cloud/webhook/nueva-vacante">
+
+        <label for="vacante">Nombre de la vacante *</label>
+        <input type="text" id="vacante" name="vacante"
+               placeholder="Ej: Desarrollador Backend" required />
+
+        <label for="requisitos">Requisitos de la vacante *</label>
+        <textarea id="requisitos" name="requisitos" rows="4"
+                  placeholder="Ej: 2 años de experiencia en Python, SQL, APIs REST, Docker..."
+                  required></textarea>
+
+        <button type="submit" id="btnVacante">Publicar vacante</button>
+
+        <div class="msg" id="msgVacante"></div>
+
+        <!-- Respuesta real de n8n (éxito, duplicada o faltan datos) -->
+        <div id="vacanteBox" class="result-box"></div>
+      </form>
+    </section>
+
+    <!-- ================= DASHBOARD ================= -->
+    <section class="panel">
+      <h2>Dashboard del proceso</h2>
+      <p class="panel-desc">
+        Métricas en tiempo real conectadas directamente a Google Sheets.
+      </p>
+
+      <!-- Gráficos publicados desde Google Sheets (gráfico → ⋮ → Publicar gráfico → Insertar).
+           Se actualizan automáticamente con cada nuevo registro del workflow. -->
+      <div class="charts-grid">
+        <div class="chart-card full">
+          <h3>Candidatos por vacante</h3>
+          <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQqc8UTYuPvctq5rclKRpQtg1xmCEAY3VBQiYB8H0xHAj9cu3-QecJu2vLl8SnQIomsMiYyXHIRJapO/pubchart?oid=2028788254&amp;format=interactive"
+                  title="Candidatos por vacante"></iframe>
+        </div>
+        <div class="chart-card">
+          <h3>Clasificación de candidatos</h3>
+          <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQqc8UTYuPvctq5rclKRpQtg1xmCEAY3VBQiYB8H0xHAj9cu3-QecJu2vLl8SnQIomsMiYyXHIRJapO/pubchart?oid=1461306584&amp;format=interactive"
+                  title="Clasificación de candidatos"></iframe>
+        </div>
+        <div class="chart-card">
+          <h3>Score promedio por vacante</h3>
+          <iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQqc8UTYuPvctq5rclKRpQtg1xmCEAY3VBQiYB8H0xHAj9cu3-QecJu2vLl8SnQIomsMiYyXHIRJapO/pubchart?oid=1165056224&amp;format=interactive"
+                  title="Score promedio por vacante"></iframe>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

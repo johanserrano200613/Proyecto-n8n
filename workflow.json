@@ -1,0 +1,1979 @@
+{
+  "name": "Sistema inteligente de preselecciono y evaluación de candidatos",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "Paguina-web",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "https://kbkgiv54abh2w.kimi.page/",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -992,
+        208
+      ],
+      "id": "23c3681a-ea72-4a7c-9ec1-993c4be9c56d",
+      "name": "Webhook",
+      "webhookId": "d3fb8357-4598-4f26-943d-21b385a8f0a7"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "cv",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -96,
+        176
+      ],
+      "id": "4ce6a833-17b9-40ac-9fc6-26279f07225e",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"temperature\": 0,\n  \"response_format\": { \"type\": \"json_object\" },\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Eres un asistente de RRHH que analiza hojas de vida. Evalúas la compatibilidad del candidato con la vacante indicada y respondes SOLO con un JSON válido, sin markdown ni texto adicional, con esta estructura exacta: {\\\"score\\\": <numero 0-100>, \\\"experiencia_anios\\\": <numero>, \\\"habilidades\\\": [<lista>], \\\"nivel_educativo\\\": \\\"<...>\\\", \\\"fortalezas\\\": [<2-4>], \\\"brechas\\\": [<2-4>], \\\"coherencia\\\": <\\\"alta\\\"|\\\"media\\\"|\\\"baja\\\">, \\\"observacion_coherencia\\\": \\\"<1-2 lineas>\\\", \\\"resumen\\\": \\\"<2-3 lineas>\\\"}.\\nGuía de puntaje: experiencia directa en el rol hasta 40 puntos, tecnologías requeridas hasta 30, formación hasta 20, certificaciones hasta 10.\\nAdemás: compara los datos declarados en el formulario con el contenido real del CV; si hay inconsistencias claras, menciónalo en las brechas, bájalo en coherencia y refléjalo bajando el score.\\nREGLAS: Nunca recomiendas descartar a nadie, solo priorizas la revisión humana. NUNCA evalúas ni mencionas género, edad, foto, estado civil, nacionalidad, religión, orientación sexual ni discapacidad — solo habilidades, experiencia y formación.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"Vacante: {{ $('Webhook').item.json.body.vacante }}.\\nREQUISITOS DE LA VACANTE: {{ $('Code3').item.json.requisitos }}.\\nDATOS DECLARADOS POR EL CANDIDATO — Experiencia declarada: {{ $('Webhook').item.json.body.experiencia }}. Tecnologías declaradas: {{ $('Webhook').item.json.body.tecnologias }}.\\nHOJA DE VIDA:\\n{{ JSON.stringify($('Code-TextoCV').item.json.texto_cv).slice(1, -1) }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2368,
+        128
+      ],
+      "id": "f71497c8-49b3-42d7-a379-67deb8c586d0",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "9KpoaoOvalRPmr8B",
+          "name": "Header Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\nconst analisis = JSON.parse(item.choices[0].message.content);\n\nconst s = Math.max(\n  0,\n  Math.min(100, Math.trunc(Number(analisis.score)))\n);\n\nanalisis.score = s;\n\nanalisis.clasificacion =\n  s >= 80 ? 'REVISION_PRIORITARIA' :\n  s >= 60 ? 'REVISION_MANUAL' :\n            'REVISION_SECUNDARIA';\n\nanalisis.estado =\n  s >= 80 ? 'PENDIENTE_REVISION' : 'ANALIZADO';\n\nreturn [{ json: analisis }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2592,
+        128
+      ],
+      "id": "d04ae031-af79-4183-ac7e-e64daf216447",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "12kDBvB-Nia0CjwtLS_D0sipjnIt4sk2LN3p28eS_XcI",
+          "mode": "list",
+          "cachedResultName": "Preseleccion",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12kDBvB-Nia0CjwtLS_D0sipjnIt4sk2LN3p28eS_XcI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12kDBvB-Nia0CjwtLS_D0sipjnIt4sk2LN3p28eS_XcI/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ 'TF-' + $now.toFormat('yyyy') + '-' + String($('Get row(s) in sheet').all().filter(item => item.json.id).length + 1).padStart(4, '0') }}",
+            "score": "={{ $json.score }}",
+            "clasificacion": "={{ $json.clasificacion }}",
+            "fortalezas": "={{ $json.fortalezas.join(\"; \") }}",
+            "brechas": "={{ $json.brechas.join(\"; \") }}",
+            "resumen": "={{ $json.resumen }}",
+            "nombre": "={{ $('Webhook').item.json.body.nombre }}",
+            "correo": "={{ $('Webhook').item.json.body.correo }}",
+            "telefono": "={{ $('Webhook').item.json.body.telefono }}",
+            "vacante": "={{ $('Webhook').item.json.body.vacante }}",
+            "experiencia": "={{ $('Webhook').item.json.body.experiencia }}",
+            "tecnologia": "={{ $('Webhook').item.json.body.tecnologias }}",
+            "fecha": "={{ $now.toISO() }}",
+            "estado": "={{ $json.estado }}",
+            "nivel educativo": "={{ $('Code in JavaScript').item.json.nivel_educativo }}",
+            "habilidades": "={{ $json.habilidades }}",
+            "coherencia": "={{ $json.coherencia }}",
+            "observacion_coherencia": "={{ $json.observacion_coherencia }}",
+            "revision_rrhh": "pendiente"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fecha",
+              "displayName": "fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "nombre",
+              "displayName": "nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "correo",
+              "displayName": "correo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "telefono",
+              "displayName": "telefono",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "vacante",
+              "displayName": "vacante",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "experiencia",
+              "displayName": "experiencia",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "tecnologia",
+              "displayName": "tecnologia",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "score",
+              "displayName": "score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "clasificacion",
+              "displayName": "clasificacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fortalezas",
+              "displayName": "fortalezas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "brechas",
+              "displayName": "brechas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "resumen",
+              "displayName": "resumen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "estado",
+              "displayName": "estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "nivel educativo",
+              "displayName": "nivel educativo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "habilidades",
+              "displayName": "habilidades",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "coherencia",
+              "displayName": "coherencia",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "observacion_coherencia",
+              "displayName": "observacion_coherencia",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "revision_rrhh",
+              "displayName": "revision_rrhh",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3040,
+        224
+      ],
+      "id": "f0829531-cc65-45df-9d64-211070d322cf",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IB0xUamkKcwGXw87",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "12kDBvB-Nia0CjwtLS_D0sipjnIt4sk2LN3p28eS_XcI",
+          "mode": "list",
+          "cachedResultName": "Preseleccion",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12kDBvB-Nia0CjwtLS_D0sipjnIt4sk2LN3p28eS_XcI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12kDBvB-Nia0CjwtLS_D0sipjnIt4sk2LN3p28eS_XcI/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1472,
+        32
+      ],
+      "id": "fd3bb75a-6187-4807-83b2-4da95d2b2e28",
+      "name": "Get row(s) in sheet",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IB0xUamkKcwGXw87",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.score }}",
+                    "rightValue": 79,
+                    "operator": {
+                      "type": "number",
+                      "operation": "gt"
+                    },
+                    "id": "1cc2ce43-0203-4e53-9dfa-019c6c9d47f9"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "prioritario"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "c9620c6c-02a3-4038-a38f-eeaeb1bbdd73",
+                    "leftValue": "={{ $json.score }}",
+                    "rightValue": 59,
+                    "operator": {
+                      "type": "number",
+                      "operation": "gt"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "manual"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "4ebe53b5-e503-4fcf-820a-a474d70cc52f",
+                    "leftValue": "={{ $json.score }}",
+                    "rightValue": "={{ -1 }}",
+                    "operator": {
+                      "type": "number",
+                      "operation": "gt"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "secundario"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        2816,
+        112
+      ],
+      "id": "2c088c97-dbf5-43d6-8b31-5b985e59a856",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "jsCode": "const filas = $input.all();\nconst form = $('Webhook').item.json.body || $('Webhook').item.json;\n\nconst existe = filas.some(f =>\n  f.json.correo === form.correo && f.json.vacante === form.vacante\n);\n\n// Pasamos adelante el dato del duplicado\nreturn [{ json: { duplicado: existe } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1696,
+        32
+      ],
+      "id": "01eba78d-da39-4caa-ac1a-2f9faa2507d9",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1fa8b220-eaba-4aa7-9728-7dca43914eae",
+              "leftValue": "={{ $json.duplicado }}",
+              "rightValue": "=",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1920,
+        32
+      ],
+      "id": "89919c6a-a798-402f-9b82-4cf5999fd8e5",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "<div style=\"font-family:Arial;padding:18px;color:#854d0e;background:#fef9c3;border:1px solid #fde047;border-radius:10px;text-align:center;font-weight:bold\">⚠️ Ya tienes una postulación registrada para esta vacante.</div>",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              },
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2144,
+        -64
+      ],
+      "id": "7f7fcca9-fa02-4559-9daa-a00d195c8a3b",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "<div style=\"font-family:Arial;padding:18px;color:#166534;background:#dcfce7;border:1px solid #86efac;border-radius:10px;text-align:center;font-weight:bold\">✅ ¡Postulación recibida! Gracias por postularte. El equipo de RRHH revisará tu perfil.</div>",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              },
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        3264,
+        224
+      ],
+      "id": "dd9f97a0-2255-4b74-9e44-7a9cbec6dcfc",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "chatId": "8463193873",
+        "text": "=🔴 REVISIÓN PRIORITARIA  Candidato: {{ $('Webhook').item.json.body.nombre }} Vacante: {{ $('Webhook').item.json.body.vacante }} Score: {{ $('Code in JavaScript').item.json.score }}/100 Fortalezas: {{ $('Code in JavaScript').item.json.fortalezas.join(\", \") }}  Revisar en el Sheet cuanto antes.",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3040,
+        32
+      ],
+      "id": "b8593441-ee86-4685-a57f-cd7f96effa47",
+      "name": "Send a text message",
+      "webhookId": "e3238ec5-5e74-49f7-8a9c-8cc95dc5a819",
+      "credentials": {
+        "telegramApi": {
+          "id": "EEq0nvr23OUCsej1",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        -992,
+        720
+      ],
+      "id": "713c6a41-2743-488d-bf50-2d8446417dcc",
+      "name": "Telegram Trigger",
+      "webhookId": "f94caf6d-7e3a-4660-8179-6ec6d3ac5c4b",
+      "credentials": {
+        "telegramApi": {
+          "id": "WSEhmXRuunGBQUMk",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ ($json.message.text || '').trim().split(/\\s+/)[0] }}",
+                    "rightValue": "=/candidato",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "15a38adb-c878-4a6f-9975-a318bc486747"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "candidato"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "e65ee101-0713-418f-83a6-a4b9234dfa32",
+                    "leftValue": "={{ ($json.message.text || '').trim() }}",
+                    "rightValue": "=/pendiente",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "pendiente"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -768,
+        720
+      ],
+      "id": "de497bc6-83c2-46fc-a528-3ad8f34bba77",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "12kDBvB-Nia0CjwtLS_D0sipjnIt4sk2LN3p28eS_XcI",
+          "mode": "list",
+          "cachedResultName": "Preseleccion",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12kDBvB-Nia0CjwtLS_D0sipjnIt4sk2LN3p28eS_XcI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12kDBvB-Nia0CjwtLS_D0sipjnIt4sk2LN3p28eS_XcI/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "id",
+              "lookupValue": "={{ ($json.message.text || '').trim().split(/\\s+/)[1] || '' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -544,
+        528
+      ],
+      "id": "62560c84-12fa-4d07-a320-c7b37a427701",
+      "name": "Get row(s) in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IB0xUamkKcwGXw87",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "=📋 CANDIDATO {{ $('Get row(s) in sheet1').item.json.id }}\n\n👤 Nombre: {{ $('Get row(s) in sheet1').item.json.nombre }}\n💼 Vacante: {{ $('Get row(s) in sheet1').item.json.vacante }}\n📊 Score: {{ $('Get row(s) in sheet1').item.json.score }}/100\n🏷️ Clasificación: {{ $('Get row(s) in sheet1').item.json.clasificacion }}\n\n💪 Fortalezas: {{ $('Get row(s) in sheet1').item.json.fortalezas }}\n\n⚠️ Brechas: {{ $('Get row(s) in sheet1').item.json.brechas }}\n\n🎓 Nivel educativo: {{ $('Get row(s) in sheet1').item.json['nivel educativo'] }}\n📌 Estado: {{ $('Get row(s) in sheet1').item.json.estado }}\n🛠️ Habilidades: {{ $('Get row(s) in sheet1').item.json.habilidades }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -320,
+        528
+      ],
+      "id": "8332a274-8009-4a77-b6e3-a84de5023e47",
+      "name": "Send a text message1",
+      "webhookId": "5ee637fb-7bb3-4553-bf0c-ddc25acb18e2",
+      "alwaysOutputData": true,
+      "credentials": {
+        "telegramApi": {
+          "id": "EEq0nvr23OUCsej1",
+          "name": "Telegram account"
+        }
+      },
+      "notes": "❌ No encontré ningún candidato con ese ID. Verifica el código."
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "12kDBvB-Nia0CjwtLS_D0sipjnIt4sk2LN3p28eS_XcI",
+          "mode": "list",
+          "cachedResultName": "Preseleccion",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12kDBvB-Nia0CjwtLS_D0sipjnIt4sk2LN3p28eS_XcI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12kDBvB-Nia0CjwtLS_D0sipjnIt4sk2LN3p28eS_XcI/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "estado",
+              "lookupValue": "PENDIENTE_REVISION"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -544,
+        720
+      ],
+      "id": "ef2ac656-cab5-422f-ad53-50d2808aa4a1",
+      "name": "Get row(s) in sheet2",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IB0xUamkKcwGXw87",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const filas = $input.all().filter(f => f.json.id); // ignora el item vacío si no hay pendientes\n\nlet mensaje;\nif (filas.length === 0) {\n  mensaje = '✅ No hay candidatos pendientes de revisión. ¡Todo al día!';\n} else {\n  mensaje = `📋 CANDIDATOS PENDIENTES DE REVISIÓN (${filas.length})\\n\\n`;\n  filas.forEach((f, i) => {\n    mensaje += `${i + 1}. ${f.json.id} — ${f.json.nombre} — ${f.json.vacante} — ${f.json.score}/100\\n`;\n  });\n  mensaje += `\\nUsa /candidato <ID> para ver el detalle.`;\n}\n\nreturn [{ json: { mensaje } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -320,
+        720
+      ],
+      "id": "77539b9e-1609-4abf-8b15-1678871210f8",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.mensaje }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -96,
+        720
+      ],
+      "id": "b5b81910-f69a-4a51-a7c6-5963347cfca7",
+      "name": "Send a text message2",
+      "webhookId": "5ee637fb-7bb3-4553-bf0c-ddc25acb18e2",
+      "alwaysOutputData": true,
+      "credentials": {
+        "telegramApi": {
+          "id": "EEq0nvr23OUCsej1",
+          "name": "Telegram account"
+        }
+      },
+      "notes": "❌ No encontré ningún candidato con ese ID. Verifica el código."
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first();\nconst body = item.json.body || item.json;\nconst binary = item.binary || {};\nconst cv = binary.cv;\n\nconst errores = [];\n\nfunction estaVacio(valor) {\n  return valor === undefined ||\n    valor === null ||\n    String(valor).trim() === '';\n}\n\n// Campos obligatorios\nconst camposObligatorios = [\n  'nombre',\n  'correo',\n  'telefono',\n  'vacante',\n  'experiencia',\n  'tecnologias'\n];\n\nfor (const campo of camposObligatorios) {\n  if (estaVacio(body[campo])) {\n    errores.push(`Falta el campo obligatorio: ${campo}`);\n  }\n}\n\n// Validación básica del correo\nif (\n  !estaVacio(body.correo) &&\n  !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(String(body.correo).trim())\n) {\n  errores.push('El correo electrónico no tiene un formato válido');\n}\n\n// La experiencia no puede ser negativa\nif (\n  !estaVacio(body.experiencia) &&\n  Number(body.experiencia) < 0\n) {\n  errores.push('La experiencia no puede ser negativa');\n}\n\n// Busca el consentimiento con varios nombres posibles\nconst consentimiento =\n  body.tratamiento_datos ??\n  body.consentimiento ??\n  body.acepta_datos ??\n  body.aceptar_datos ??\n  body.autorizacion_datos;\n\nconst consentimientoNormalizado = String(\n  consentimiento ?? ''\n).toLowerCase().trim();\n\nconst valoresAceptados = [\n  'true',\n  'on',\n  '1',\n  'si',\n  'sí',\n  'acepto',\n  'accepted'\n];\n\nif (!valoresAceptados.includes(consentimientoNormalizado)) {\n  errores.push(\n    'El candidato debe aceptar el tratamiento de datos personales'\n  );\n}\n\n// Validación del archivo\nif (!cv) {\n  errores.push('No se recibió la hoja de vida');\n} else {\n  const nombreArchivo = String(cv.fileName || '').toLowerCase();\n  const tipoArchivo = String(cv.mimeType || '').toLowerCase();\n\n  const extensionPdf = nombreArchivo.endsWith('.pdf');\n  const mimePdf = tipoArchivo === 'application/pdf';\n  const extensionesImagen = ['.jpg', '.jpeg', '.png', '.webp'];\n  const extensionImagen = extensionesImagen.some(ext => nombreArchivo.endsWith(ext));\n  const mimeImagen = tipoArchivo.startsWith('image/');\n\n  const esPdfValido = extensionPdf && mimePdf;\n  const esImagenValida = extensionImagen && mimeImagen;\n\n  if (!esPdfValido && !esImagenValida) {\n    errores.push('La hoja de vida debe ser un PDF o una imagen JPG, PNG o WEBP válida');\n  }\n}\n\nreturn [\n  {\n    json: {\n      ...item.json,\n      validacion_ok: errores.length === 0,\n      errores\n    },\n    binary\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -768,
+        208
+      ],
+      "id": "a3377828-7854-451b-8e6a-b8b0424231d8",
+      "name": "Code in JavaScript4"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "aebd3761-f1b4-41f6-bdb7-fb3785708fbd",
+              "leftValue": "={{ $json.validacion_ok }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -544,
+        208
+      ],
+      "id": "fec24b5c-272e-4f94-9e5b-b83a83bb0f96",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "<div style=\"font-family:Arial;padding:18px;color:#991b1b;background:#fee2e2;border:1px solid #fca5a5;border-radius:10px;text-align:center;font-weight:bold\">❌ Datos inválidos. Revisa el formulario e inténtalo de nuevo.</div>",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              },
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -320,
+        304
+      ],
+      "id": "49f0482c-5ccc-43f6-ae16-d7033ae35488",
+      "name": "Respond to Webhook2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6c393da1-765b-4873-a434-705f007fc148",
+              "leftValue": "={{ $json.text.length }}",
+              "rightValue": 50,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": "",
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        128,
+        176
+      ],
+      "id": "1653ee62-9b17-4be0-b430-7607dd6dd556",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.googleapis.com/drive/v3/files/{{ $json.id }}/copy?ocrLanguage=es",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"mimeType\": \"application/vnd.google-apps.document\" }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        800,
+        -32
+      ],
+      "id": "95e87b06-3362-41fe-8ebf-c6a5fdcfd325",
+      "name": "Google Drive Convertir a Doc",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "4f59aBA8yore649B",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.first().json;\n// Puede venir del Extract (campo text) o del export de Drive (texto plano)\nlet texto = item.text || item.data || (typeof item === 'string' ? item : '') || '';\nreturn [{ json: { texto_cv: texto } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1248,
+        32
+      ],
+      "id": "8ec9a686-3bf2-4cd1-a345-aeb7d6bdd1ce",
+      "name": "Code-TextoCV"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "bd326b2f-3c5f-450b-a2f9-bb3beb624db4",
+              "leftValue": "={{ $('Webhook').item.binary.cv.mimeType }}",
+              "rightValue": "image",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": "",
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -320,
+        112
+      ],
+      "id": "51f21784-5578-41c8-b20e-0d5e84526299",
+      "name": "If_img"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Re-adjunta el archivo original del Webhook (Extract from File lo eliminó)\nconst wh = $('Webhook').first();\nreturn [{ json: {}, binary: wh.binary }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        352,
+        256
+      ],
+      "id": "025781eb-6c05-442f-af5a-26aec60b1f6d",
+      "name": "Code readjuntar cv"
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "cv",
+        "name": "={{ $binary.cv.fileName }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "root",
+          "cachedResultName": "/"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        576,
+        -32
+      ],
+      "id": "157b46ff-9d78-41fb-8560-792b8a294e3e",
+      "name": "Google Drive Upload OCR",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "4f59aBA8yore649B",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://www.googleapis.com/drive/v3/files/{{ $json.id }}/export?mimeType=text/plain",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1024,
+        -32
+      ],
+      "id": "a38760f8-554d-41a3-a68b-c7ddc14daba7",
+      "name": "Google Drive Exportar texto",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "4f59aBA8yore649B",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const entrada = $input.first().json;\n\nconst vacante = String(\n  $('Webhook').item.json.body.vacante || ''\n).trim();\n\n// Normaliza mayúsculas y tildes para reconocer mejor las vacantes.\nconst clave = vacante\n  .normalize('NFD')\n  .replace(/[\\u0300-\\u036f]/g, '')\n  .toLowerCase()\n  .trim();\n\nlet requisitos;\n\nif (\n  clave.includes('backend') ||\n  clave.includes('desarrollador') ||\n  clave.includes('programador')\n) {\n  requisitos = {\n    tecnologias: [\n      'Java',\n      'Spring Boot',\n      'SQL',\n      'Git',\n      'REST API',\n      'Docker'\n    ],\n    experiencia_minima: 1,\n    formacion:\n      'Técnica, tecnológica o profesional en desarrollo de software, sistemas o áreas relacionadas',\n    descripcion:\n      'Desarrollo y mantenimiento de aplicaciones backend, servicios web y bases de datos',\n    responsabilidades: [\n      'Desarrollar servicios y API REST',\n      'Trabajar con bases de datos relacionales',\n      'Utilizar control de versiones con Git',\n      'Realizar pruebas y corrección de errores'\n    ]\n  };\n\n} else if (\n  clave.includes('analista') ||\n  clave.includes('datos') ||\n  clave.includes('data')\n) {\n  requisitos = {\n    tecnologias: [\n      'SQL',\n      'Python',\n      'Power BI',\n      'Excel',\n      'ETL',\n      'Visualización de datos'\n    ],\n    experiencia_minima: 1,\n    formacion:\n      'Técnica, tecnológica o profesional en sistemas, estadística, ingeniería o áreas relacionadas',\n    descripcion:\n      'Análisis, limpieza, transformación y visualización de información para apoyar decisiones',\n    responsabilidades: [\n      'Consultar y transformar datos',\n      'Construir reportes y dashboards',\n      'Identificar tendencias e indicadores',\n      'Validar la calidad de los datos'\n    ]\n  };\n\n} else if (\n  clave.includes('disenador') ||\n  clave.includes('diseno') ||\n  clave.includes('ux') ||\n  clave.includes('ui')\n) {\n  requisitos = {\n    tecnologias: [\n      'Figma',\n      'Prototipado',\n      'Wireframes',\n      'Investigación de usuarios',\n      'Design Systems',\n      'Diseño responsive'\n    ],\n    experiencia_minima: 1,\n    formacion:\n      'Técnica, tecnológica o profesional en diseño gráfico, diseño digital, UX/UI o áreas relacionadas',\n    descripcion:\n      'Diseño de experiencias de usuario e interfaces digitales claras, accesibles y consistentes',\n    responsabilidades: [\n      'Crear wireframes y prototipos',\n      'Diseñar interfaces digitales',\n      'Realizar investigación de usuarios',\n      'Mantener componentes y sistemas de diseño'\n    ]\n  };\n\n} else if (\n  clave.includes('soporte') ||\n  clave.includes('mesa de ayuda') ||\n  clave.includes('help desk') ||\n  clave.includes('tecnico de sistemas')\n) {\n  requisitos = {\n    tecnologias: [\n      'Windows',\n      'Linux',\n      'Redes TCP/IP',\n      'Soporte de hardware y software',\n      'Sistemas de tickets',\n      'Microsoft 365'\n    ],\n    experiencia_minima: 1,\n    formacion:\n      'Técnica o tecnológica en sistemas, informática, redes o áreas relacionadas',\n    descripcion:\n      'Atención de incidentes, soporte a usuarios, mantenimiento de equipos y solución de problemas técnicos',\n    responsabilidades: [\n      'Atender solicitudes e incidentes de usuarios',\n      'Diagnosticar problemas de hardware y software',\n      'Configurar equipos y aplicaciones',\n      'Registrar y dar seguimiento a tickets'\n    ]\n  };\n\n} else {\n  requisitos = {\n    tecnologias: [],\n    experiencia_minima: 0,\n    formacion: 'No especificada',\n    descripcion: 'Vacante sin requisitos configurados',\n    responsabilidades: [],\n    requiere_revision_manual: true\n  };\n}\n\nreturn [\n  {\n    json: {\n      ...entrada,\n      vacante,\n      requisitos\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2144,
+        128
+      ],
+      "id": "52b0abad-ce27-452c-9738-a8ad697e49ca",
+      "name": "Code3"
+    },
+    {
+      "parameters": {
+        "path": "vacantes",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -992,
+        -288
+      ],
+      "id": "34f32244-bc1f-4d54-87d1-cae411a47bd1",
+      "name": "Webhook3",
+      "webhookId": "6ca9ac51-4805-41a6-8c40-8d4c2ffeeadb"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "12kDBvB-Nia0CjwtLS_D0sipjnIt4sk2LN3p28eS_XcI",
+          "mode": "list",
+          "cachedResultName": "Preseleccion",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12kDBvB-Nia0CjwtLS_D0sipjnIt4sk2LN3p28eS_XcI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 348766831,
+          "mode": "list",
+          "cachedResultName": "Vacantes",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12kDBvB-Nia0CjwtLS_D0sipjnIt4sk2LN3p28eS_XcI/edit#gid=348766831"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -768,
+        -288
+      ],
+      "id": "b6afb5fd-2cca-4fec-b0a8-09a98890583a",
+      "name": "Get Vacantes",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IB0xUamkKcwGXw87",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const activas = $input.all()\n  .filter(i => String(i.json.activa).toUpperCase() === 'SI')\n  .map(i => ({ vacante: i.json.vacante, requisitos: i.json.requisitos }));\nreturn activas.map(v => ({ json: v }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -544,
+        -288
+      ],
+      "id": "3fea9efe-ffa6-4852-8079-25fdc8a4d52d",
+      "name": "Code in JavaScript3"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -320,
+        -288
+      ],
+      "id": "888374aa-864d-41f2-8f6b-77b7b5bdb9e1",
+      "name": "Respond to Webhook3"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "nueva-vacante",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -992,
+        1232
+      ],
+      "id": "5918228c-5bf2-448e-acf9-9be60b60ddae",
+      "name": "Webhook-NuevaVacante",
+      "webhookId": "877660b3-c95e-4fe5-b173-eea32a22de41"
+    },
+    {
+      "parameters": {
+        "jsCode": "const form = $input.first().json.body || $input.first().json;\nconst ok = form.vacante && form.requisitos &&\n           form.vacante.trim() !== '' && form.requisitos.trim() !== '';\nreturn [{ json: { ok: Boolean(ok), vacante: (form.vacante || '').trim(), requisitos: (form.requisitos || '').trim() } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -768,
+        1232
+      ],
+      "id": "65b7cf5a-06b2-40bc-8179-e183d55a5c1f",
+      "name": "Validar Vacante"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "10343842-d35f-473e-ad5a-783a3aba3f48",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -544,
+        1232
+      ],
+      "id": "00cdbb14-0d69-4df2-8ef8-15eebc02cfa7",
+      "name": "If Datos Completos"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "12kDBvB-Nia0CjwtLS_D0sipjnIt4sk2LN3p28eS_XcI",
+          "mode": "list",
+          "cachedResultName": "Preseleccion",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12kDBvB-Nia0CjwtLS_D0sipjnIt4sk2LN3p28eS_XcI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 348766831,
+          "mode": "list",
+          "cachedResultName": "Vacantes",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12kDBvB-Nia0CjwtLS_D0sipjnIt4sk2LN3p28eS_XcI/edit#gid=348766831"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -320,
+        1232
+      ],
+      "id": "cf234aa4-5c82-451c-b281-5325294eb341",
+      "name": "Get Vacantes Duplicado",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IB0xUamkKcwGXw87",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const filas = $input.all();\nconst nueva = $('Validar Vacante').first().json;\nconst existe = filas.some(f => String(f.json.vacante).trim() === nueva.vacante);\nreturn [{ json: { duplicado: existe, vacante: nueva.vacante, requisitos: nueva.requisitos } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -96,
+        1232
+      ],
+      "id": "18bb11ad-ff79-4939-9b79-66b75834a664",
+      "name": "Verificar Duplicado"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "eb5666af-de35-42dd-a74d-73718a1ac11b",
+              "leftValue": "={{ $json.duplicado }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        128,
+        1232
+      ],
+      "id": "99eed1d9-59b8-4592-a623-0cea7185252f",
+      "name": "If Vacante Duplicada"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "12kDBvB-Nia0CjwtLS_D0sipjnIt4sk2LN3p28eS_XcI",
+          "mode": "list",
+          "cachedResultName": "Preseleccion",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12kDBvB-Nia0CjwtLS_D0sipjnIt4sk2LN3p28eS_XcI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 348766831,
+          "mode": "list",
+          "cachedResultName": "Vacantes",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12kDBvB-Nia0CjwtLS_D0sipjnIt4sk2LN3p28eS_XcI/edit#gid=348766831"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "vacante": "={{ $json.vacante }}",
+            "requisitos": "={{ $json.requisitos }}",
+            "activa": "SI",
+            "fecha": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "vacante",
+              "displayName": "vacante",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "requisitos",
+              "displayName": "requisitos",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "activa",
+              "displayName": "activa",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha",
+              "displayName": "fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        352,
+        1136
+      ],
+      "id": "79506553-8e60-4cdb-85d4-6b743ded6e49",
+      "name": "Append Nueva Vacante",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "IB0xUamkKcwGXw87",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "<div style=\"font-family:Arial;padding:24px;color:#166534;background:#dcfce7;border:1px solid #86efac;border-radius:10px\">Vacante publicada ✅ — ya aparece en el formulario</div>",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              },
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        576,
+        1136
+      ],
+      "id": "422dceb8-b0ac-4a20-919c-9bb082b91924",
+      "name": "Respuesta Vacante Creada"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "<div style=\"font-family:Arial;padding:24px;color:#854d0e;background:#fef9c3;border:1px solid #fde047;border-radius:10px\">La vacante ya existe</div>",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              },
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        352,
+        1328
+      ],
+      "id": "c194091d-ddd6-4ddb-9e57-d90e9257d4ce",
+      "name": "Respuesta Vacante Duplicada"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "<div style=\"font-family:Arial;padding:24px;color:#991b1b;background:#fee2e2;border:1px solid #fca5a5;border-radius:10px\">Faltan datos</div>",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              },
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -400,
+        1376
+      ],
+      "id": "bc8206a3-9c84-4d52-94fa-898fb5006d82",
+      "name": "Respuesta Faltan Datos"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "{{ true }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              },
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -544,
+        928
+      ],
+      "id": "a77ded18-db72-4ca7-a963-5cb1562c72e0",
+      "name": "Respuesta Faltan Datos Conectada"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get row(s) in sheet2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet2": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Send a text message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript4": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "If_img",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Code readjuntar cv",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code-TextoCV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If_img": {
+      "main": [
+        [
+          {
+            "node": "Google Drive Upload OCR",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code readjuntar cv": {
+      "main": [
+        [
+          {
+            "node": "Google Drive Upload OCR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive Upload OCR": {
+      "main": [
+        [
+          {
+            "node": "Google Drive Convertir a Doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive Convertir a Doc": {
+      "main": [
+        [
+          {
+            "node": "Google Drive Exportar texto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive Exportar texto": {
+      "main": [
+        [
+          {
+            "node": "Code-TextoCV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code-TextoCV": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code3": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook3": {
+      "main": [
+        [
+          {
+            "node": "Get Vacantes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Vacantes": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript3": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar Vacante": {
+      "main": [
+        [
+          {
+            "node": "If Datos Completos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Duplicado": {
+      "main": [
+        [
+          {
+            "node": "If Vacante Duplicada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Vacante Duplicada": {
+      "main": [
+        [
+          {
+            "node": "Respuesta Vacante Duplicada",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append Nueva Vacante",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append Nueva Vacante": {
+      "main": [
+        [
+          {
+            "node": "Respuesta Vacante Creada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Datos Completos": {
+      "main": [
+        [
+          {
+            "node": "Get Vacantes Duplicado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respuesta Faltan Datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Vacantes Duplicado": {
+      "main": [
+        [
+          {
+            "node": "Verificar Duplicado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook-NuevaVacante": {
+      "main": [
+        [
+          {
+            "node": "Validar Vacante",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "30bc7ef6-f304-4d31-a615-6bdf4d8d0173",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "fe41a189d9e90cd7a1d5fcfa37794ee3bf673612d2675bd63d5209f2a6431499"
+  },
+  "nodeGroups": [],
+  "id": "6JlPEYB7FTknAYJz",
+  "tags": []
+}

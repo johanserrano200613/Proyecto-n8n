@@ -1,0 +1,316 @@
+/* TalentFlow AI — estilos compartidos (formulario público + página RRHH)
+   Tema profesional: azules (confianza), blancos/grises claros (lectura),
+   naranja como acento para las acciones principales, gris oscuro para texto.
+   Tipografía sans-serif legible (Open Sans / Roboto / sistema). */
+
+:root {
+  --azul: #1d4ed8;
+  --azul-oscuro: #1e3a8a;
+  --acento: #ea580c;
+  --acento-hover: #c2410c;
+  --texto: #1f2937;
+  --texto-suave: #4b5563;
+  --borde: #d1d5db;
+  --fondo: #f3f4f6;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Open Sans', 'Roboto', 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh;
+  background: var(--fondo);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ===== Barra superior ===== */
+
+.topbar {
+  width: 100%;
+  background: var(--azul-oscuro);
+  color: #ffffff;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.topbar .marca {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+
+.topbar .marca span {
+  color: #93c5fd;
+}
+
+.topbar a {
+  color: #dbeafe;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.topbar a:hover {
+  text-decoration: underline;
+}
+
+/* ===== Tarjeta principal (formulario de postulación) ===== */
+
+.container {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 36px 40px;
+  margin: 32px 24px;
+  width: 100%;
+  max-width: 560px;
+  color: var(--texto);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+h1 {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--azul-oscuro);
+}
+
+h1 span {
+  color: var(--azul);
+}
+
+.subtitle {
+  color: var(--texto-suave);
+  margin: 8px 0 26px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ===== Campos del formulario ===== */
+
+form label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin: 16px 0 6px;
+  color: var(--texto);
+}
+
+form input[type="text"],
+form input[type="email"],
+form input[type="tel"],
+form input[type="file"],
+form select,
+form textarea {
+  width: 100%;
+  padding: 11px 13px;
+  background: #ffffff;
+  border: 1px solid var(--borde);
+  border-radius: 8px;
+  color: var(--texto);
+  font-size: 15px;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+  font-family: inherit;
+}
+
+form textarea {
+  resize: vertical;
+  min-height: 70px;
+}
+
+form input:focus,
+form select:focus,
+form textarea:focus {
+  border-color: var(--azul);
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.15);
+}
+
+.hint {
+  display: block;
+  font-size: 12px;
+  color: var(--texto-suave);
+  margin-top: 6px;
+}
+
+/* ===== Checkbox ===== */
+
+.checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 18px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--texto-suave);
+}
+
+.checkbox input {
+  width: auto;
+  margin-top: 2px;
+}
+
+/* ===== Botón de acción (acento cálido) ===== */
+
+button {
+  width: 100%;
+  margin-top: 26px;
+  padding: 14px;
+  background: var(--acento);
+  border: none;
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .2s, opacity .2s;
+}
+
+button:hover {
+  background: var(--acento-hover);
+}
+
+button:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+/* ===== Mensajes de estado ===== */
+
+.msg {
+  margin-top: 18px;
+  padding: 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  display: none;
+  text-align: center;
+  font-weight: 600;
+}
+
+.msg.sending {
+  display: block;
+  background: #dbeafe;
+  border: 1px solid #93c5fd;
+  color: var(--azul-oscuro);
+}
+
+/* Cuadro con la respuesta de n8n (éxito / duplicado / inválido).
+   Es un div rellenado por fetch: n8n Cloud bloquea iframes con
+   X-Frame-Options: SAMEORIGIN. */
+.result-box {
+  display: none;
+  margin-top: 16px;
+}
+
+.result-box.visible {
+  display: block;
+}
+
+/* ===== Página RRHH ===== */
+
+.container-wide {
+  max-width: 900px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0 24px;
+}
+
+.panel {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 26px 28px;
+  margin-bottom: 26px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.panel h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--azul-oscuro);
+  margin-bottom: 6px;
+}
+
+.panel h2::before {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--acento);
+  margin-right: 10px;
+}
+
+.panel-desc {
+  font-size: 13px;
+  color: var(--texto-suave);
+  margin-bottom: 8px;
+}
+
+/* Dashboard: gráficos publicados desde Google Sheets (auto-actualizables) */
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.chart-card {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+}
+
+.chart-card.full {
+  grid-column: 1 / -1;
+}
+
+.chart-card h3 {
+  margin: 0;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--azul-oscuro);
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.chart-card iframe {
+  display: block;
+  width: 100%;
+  height: 300px;
+  border: none;
+}
+
+@media (max-width: 700px) {
+  .charts-grid { grid-template-columns: 1fr; }
+}
+
+/* ===== Enlaces ===== */
+
+.back-link {
+  text-align: center;
+  margin-top: 8px;
+}
+
+.back-link a {
+  color: var(--azul);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.back-link a:hover {
+  text-decoration: underline;
+}
