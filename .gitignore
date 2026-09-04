@@ -1,0 +1,21 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Node / temporary files
+node_modules/
+*.log
+.tmp/
+tmp/
+
+# Local n8n data
+.n8n/
